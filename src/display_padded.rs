@@ -103,7 +103,7 @@ impl<D: Display> Display for DisplayPadded<D> {
 
 #[cfg(test)]
 mod tests {
-    use crate::pad::{Alignment, DisplayPadded};
+    use crate::display_padded::{Alignment, DisplayPadded};
 
     #[test]
     fn test_lpad3() {

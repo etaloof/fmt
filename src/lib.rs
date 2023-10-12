@@ -1,3 +1,3 @@
 pub mod adhoc;
-mod pad;
+mod display_padded;
 pub mod style;
