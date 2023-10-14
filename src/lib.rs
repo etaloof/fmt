@@ -18,6 +18,18 @@ pub enum Align {
 
 macro_rules! disp {
     ($d:expr) => {{
-        $crate::adhoc::Disp::new(|f| $d)
+        $crate::adhoc::Disp::new($d)
     }};
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn test_disp() {
+        let expected = "test";
+
+        let actual = disp!(|f| write!(f, "{}", expected)).to_string();
+
+        assert_eq!(actual, expected)
+    }
 }

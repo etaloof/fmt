@@ -1,6 +1,6 @@
 use std::fmt::{Debug, Display, Formatter};
 
-struct Disp<F>
+pub struct Disp<F>
 where
     F: for<'a> Fn(&mut Formatter<'a>) -> std::fmt::Result,
 {
@@ -11,11 +11,11 @@ impl<F> Disp<F>
 where
     F: for<'a> Fn(&mut Formatter<'a>) -> std::fmt::Result,
 {
-    fn new(f: F) -> Self {
+    pub fn new(f: F) -> Self {
         Self { f }
     }
 
-    fn dbg(self) -> Dbg<Self> {
+    pub fn dbg(self) -> Dbg<Self> {
         Dbg { f: self }
     }
 }
@@ -29,7 +29,7 @@ where
     }
 }
 
-struct Dbg<F>
+pub struct Dbg<F>
 where
     F: Display,
 {
