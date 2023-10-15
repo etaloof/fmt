@@ -3,6 +3,7 @@ pub mod count;
 mod adhoc;
 pub mod custom;
 pub mod display_padded;
+pub mod either;
 pub mod hex;
 pub mod hexslice;
 pub mod hexviewer;
