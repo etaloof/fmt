@@ -7,6 +7,8 @@ pub mod either;
 pub mod hex;
 pub mod hexslice;
 pub mod hexviewer;
+pub mod joined;
+pub mod joined2;
 pub mod pad;
 pub mod slice;
 pub mod style;
