@@ -58,10 +58,48 @@ where
     type Item = (bool, I::Item);
 
     fn next(&mut self) -> Option<Self::Item> {
-        let is_last_iter = self.iter.done();
         let value = self.iter.next();
+        let is_last_iter = self.iter.done();
         value.map(|v| (is_last_iter, v))
     }
 }
 
 impl<I> FusedIterator for LastIterationIterator<I> where I: Iterator {}
+
+#[cfg(test)]
+mod tests {
+    use crate::utils::{FiniteIterator, LastIterationIterator};
+
+    #[test]
+    fn test_finite_iterator() {
+        let iter = &[1, 2, 3, 4, 5];
+        let mut iter = FiniteIterator::new(iter.iter());
+
+        assert!(!iter.done());
+        assert_eq!(iter.next(), Some(&1));
+        assert!(!iter.done());
+        assert_eq!(iter.next(), Some(&2));
+        assert!(!iter.done());
+        assert_eq!(iter.next(), Some(&3));
+        assert!(!iter.done());
+        assert_eq!(iter.next(), Some(&4));
+        assert!(!iter.done());
+        assert_eq!(iter.next(), Some(&5));
+        assert!(iter.done());
+        assert_eq!(iter.next(), None);
+        assert!(iter.done());
+    }
+
+    #[test]
+    fn test_last_iteration_iterator() {
+        let iter = &[1, 2, 3, 4, 5];
+        let mut iter = LastIterationIterator::new(iter.iter());
+
+        assert_eq!(iter.next(), Some((false, &1)));
+        assert_eq!(iter.next(), Some((false, &2)));
+        assert_eq!(iter.next(), Some((false, &3)));
+        assert_eq!(iter.next(), Some((false, &4)));
+        assert_eq!(iter.next(), Some((true, &5)));
+        assert_eq!(iter.next(), None);
+    }
+}
