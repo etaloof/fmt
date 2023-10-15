@@ -1,6 +1,6 @@
 pub mod count;
 //pub mod hexiter;
-mod adhoc;
+pub mod adhoc;
 pub mod custom;
 pub mod display_padded;
 pub mod either;
