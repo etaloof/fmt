@@ -66,9 +66,61 @@ where
 
 impl<I> FusedIterator for LastIterationIterator<I> where I: Iterator {}
 
+pub struct MapLast<I, F, G>
+where
+    I: Iterator,
+{
+    iter: FiniteIterator<I>,
+    f: F,
+    g: G,
+}
+
+impl<B, I, F, G> MapLast<I, F, G>
+where
+    I: Iterator,
+    F: FnMut(I::Item) -> B,
+    G: FnMut(I::Item) -> B,
+{
+    pub(crate) fn new(iter: I, map: F, map_last: G) -> Self {
+        let iter = FiniteIterator::new(iter);
+        Self {
+            iter,
+            f: map,
+            g: map_last,
+        }
+    }
+}
+
+impl<B, I: Iterator, F, G> Iterator for MapLast<I, F, G>
+where
+    F: FnMut(I::Item) -> B,
+    G: FnMut(I::Item) -> B,
+{
+    type Item = B;
+
+    #[inline]
+    fn next(&mut self) -> Option<Self::Item> {
+        let value = self.iter.next();
+        let is_last_iter = self.iter.done();
+        if is_last_iter {
+            value.map(&mut self.g)
+        } else {
+            value.map(&mut self.f)
+        }
+    }
+}
+
+impl<B, I, F, G> FusedIterator for MapLast<I, F, G>
+where
+    I: Iterator,
+    F: FnMut(I::Item) -> B,
+    G: FnMut(I::Item) -> B,
+{
+}
+
 #[cfg(test)]
 mod tests {
-    use crate::utils::{FiniteIterator, LastIterationIterator};
+    use crate::utils::{FiniteIterator, LastIterationIterator, MapLast};
 
     #[test]
     fn test_finite_iterator() {
@@ -101,5 +153,29 @@ mod tests {
         assert_eq!(iter.next(), Some((false, &4)));
         assert_eq!(iter.next(), Some((true, &5)));
         assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    fn test_last_map_iterator() {
+        let iter = &[1, 2, 3, 4, 5];
+
+        let identity = |x| x;
+        let double = |x| x * 2;
+        let zero = |_| 0;
+
+        let actual = MapLast::new(iter.iter().copied(), identity, identity);
+        assert_eq!(&actual.collect::<Vec<_>>(), &[1, 2, 3, 4, 5]);
+
+        let actual = MapLast::new(iter.iter().copied(), double, double);
+        assert_eq!(&actual.collect::<Vec<_>>(), &[2, 4, 6, 8, 10]);
+
+        let actual = MapLast::new(iter.iter().copied(), double, zero);
+        assert_eq!(&actual.collect::<Vec<_>>(), &[2, 4, 6, 8, 0]);
+
+        let actual = MapLast::new(iter.iter().copied(), zero, double);
+        assert_eq!(&actual.collect::<Vec<_>>(), &[0, 0, 0, 0, 10]);
+
+        let actual = MapLast::new(iter.iter().copied(), zero, zero);
+        assert_eq!(&actual.collect::<Vec<_>>(), &[0, 0, 0, 0, 0]);
     }
 }
