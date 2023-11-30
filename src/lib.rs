@@ -10,6 +10,7 @@ pub mod hexviewer;
 pub mod joined;
 pub mod joined2;
 pub mod pad;
+pub mod replace;
 pub mod slice;
 pub mod style;
 mod utils;
