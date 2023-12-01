@@ -28,6 +28,21 @@ impl<D: Display> DisplayPadded<D> {
     pub fn aligned(self, alignment: Alignment) -> Self {
         Self { alignment, ..self }
     }
+
+    pub fn aligned_left(self) -> Self {
+        let alignment = Alignment::Left;
+        Self { alignment, ..self }
+    }
+
+    pub fn aligned_right(self) -> Self {
+        let alignment = Alignment::Right;
+        Self { alignment, ..self }
+    }
+
+    pub fn aligned_center(self) -> Self {
+        let alignment = Alignment::Center;
+        Self { alignment, ..self }
+    }
 }
 
 impl<D: Display> Display for DisplayPadded<D> {
@@ -72,7 +87,7 @@ impl<D: Display> Display for DisplayPadded<D> {
                     f.write_char(c)?;
                 }
                 write!(f, "{}", self.display)?;
-            }
+            },
             Alignment::Right => {
                 let mut ff = Counter::new(&mut *f);
                 write!(ff, "{}", self.display)?;
@@ -80,7 +95,7 @@ impl<D: Display> Display for DisplayPadded<D> {
                 for _ in written..self.max_length {
                     f.write_char(c)?;
                 }
-            }
+            },
             Alignment::Center => {
                 let mut ff = Counter::new(Sink);
                 write!(ff, "{}", self.display)?;
@@ -94,7 +109,7 @@ impl<D: Display> Display for DisplayPadded<D> {
                 for _ in midpoint..distance {
                     f.write_char(c)?;
                 }
-            }
+            },
         }
 
         Ok(())
