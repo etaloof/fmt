@@ -1,5 +1,4 @@
-use std::fmt::Formatter;
-use std::marker::PhantomData;
+use std::{fmt::Formatter, marker::PhantomData};
 
 pub struct F<'a, S: FormatStyle> {
     s: S,
@@ -262,9 +261,9 @@ impl<T: std::fmt::Pointer> FormatStyle for Pointer<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::adhoc::Disp;
-    use crate::style::F;
     use std::fmt::Formatter;
+
+    use crate::{adhoc::Disp, style::F};
 
     struct Dummy(u64);
 
