@@ -34,3 +34,32 @@ impl<'a, I: Display> Debug for Slice<'a, I> {
         Display::fmt(self, f)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_slice() {
+        let slice = Slice::new(&["a", "b", "c"]);
+        assert_eq!(slice.to_string(), "[a, b, c]");
+    }
+
+    #[test]
+    fn test_slice_with_numbers() {
+        let slice = Slice::new(&[1, 2, 3]);
+        assert_eq!(slice.to_string(), "[1, 2, 3]");
+    }
+
+    #[test]
+    fn test_empty_slice() {
+        let slice: Slice<i32> = Slice::new(&[]);
+        assert_eq!(slice.to_string(), "[]");
+    }
+
+    #[test]
+    fn test_single_element_slice() {
+        let slice = Slice::new(&["a"]);
+        assert_eq!(slice.to_string(), "[a]");
+    }
+}
