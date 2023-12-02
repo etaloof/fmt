@@ -28,9 +28,57 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_counter() {
-        assert_eq!(Counter::count(""), 0);
-        assert_eq!(Counter::count("hello"), 5);
-        assert_eq!(Counter::count("hello world"), 11);
+    fn test_counter_empty_string() {
+        let item = "";
+        assert_eq!(Counter::count(item), item.len());
+    }
+
+    #[test]
+    fn test_counter_hello() {
+        let item = "hello";
+        assert_eq!(Counter::count(item), item.len());
+    }
+
+    #[test]
+    fn test_counter_hello_world() {
+        let item = "hello world";
+        assert_eq!(Counter::count(item), item.len());
+    }
+
+    #[test]
+    fn test_counter_hello_world2() {
+        let item = "hello world!";
+        assert_eq!(Counter::count(item), item.len());
+    }
+
+    #[test]
+    fn test_counter_multiline() {
+        let item = r#"
+        "#;
+        assert_eq!(Counter::count(item), item.len());
+    }
+
+    #[test]
+    fn test_count_single_quote() {
+        let item = "'";
+        assert_eq!(Counter::count(item), item.len());
+    }
+
+    #[test]
+    fn test_count_double_quote() {
+        let item = "\"";
+        assert_eq!(Counter::count(item), item.len());
+    }
+
+    #[test]
+    fn test_count_rust_code() {
+        let item = "fn main() { println!(\"Hello, world!\"); }";
+        assert_eq!(Counter::count(item), item.len());
+    }
+
+    #[test]
+    fn test_count_comment() {
+        let item = "// This is a comment";
+        assert_eq!(Counter::count(item), item.len());
     }
 }
