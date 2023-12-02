@@ -1,5 +1,5 @@
 use std::{
-    cell::UnsafeCell,
+    cell::Cell,
     fmt::{Debug, Display, Formatter},
 };
 
@@ -8,7 +8,7 @@ where
     I: Display,
     S: Iterator<Item = I>,
 {
-    item: UnsafeCell<Option<&'a mut S>>,
+    item: Cell<Option<&'a mut S>>,
 }
 
 impl<'a, I, S> Iter<'a, I, S>
@@ -18,7 +18,7 @@ where
 {
     pub fn new(item: &'a mut S) -> Self {
         Self {
-            item: UnsafeCell::new(Some(item)),
+            item: Cell::new(Some(item)),
         }
     }
 }
@@ -28,8 +28,8 @@ where
     S: Iterator<Item = I>,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let iter = std::mem::take(unsafe { &mut *self.item.get() });
-        for item in iter.unwrap() {
+        let iter = self.item.replace(None).ok_or(Default::default())?;
+        for item in iter {
             writeln!(f, "{}", item)?;
         }
         Ok(())
@@ -42,5 +42,51 @@ where
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         Display::fmt(self, f)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn display_prints_items() {
+        let items: [i32; 3] = [1, 2, 3];
+        let mut iter = items.into_iter();
+        let iter = Iter::new(&mut iter);
+        assert_eq!(iter.to_string(), "1\n2\n3\n");
+    }
+
+    #[test]
+    fn display_handles_empty_iter() {
+        let items: [i32; 0] = [];
+        let mut iter = items.into_iter();
+        let iter = Iter::new(&mut iter);
+        assert_eq!(iter.to_string(), "");
+    }
+
+    #[test]
+    fn display_handles_none_iter() {
+        let items: Option<i32> = None;
+        let mut iter = items.into_iter();
+        let iter = Iter::new(&mut iter);
+        assert_eq!(iter.to_string(), "");
+    }
+
+    #[test]
+    fn display_handles_one_item_iter() {
+        let items: Option<i32> = Some(1);
+        let mut iter = items.into_iter();
+        let iter = Iter::new(&mut iter);
+        assert_eq!(iter.to_string(), "1\n");
+    }
+
+    #[test]
+    #[should_panic]
+    fn panics_when_displaying_twice() {
+        let items: [i32; 3] = [1, 2, 3];
+        let mut iter = items.into_iter();
+        let iter = Iter::new(&mut iter);
+        assert_eq!(format!("{}{}", iter, iter), "");
     }
 }
