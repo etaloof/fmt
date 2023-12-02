@@ -14,6 +14,7 @@ pub mod slice;
 pub mod style;
 mod utils;
 
+#[derive(Copy, Clone)]
 pub enum Align {
     Left,
     Right,

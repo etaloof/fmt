@@ -2,6 +2,7 @@ use std::fmt::{Debug, Display, Formatter};
 
 use crate::utils::LastIterationIterator;
 
+#[derive(Copy, Clone)]
 pub struct Slice<'a, I: Display> {
     item: &'a [I],
 }
