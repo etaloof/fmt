@@ -11,6 +11,8 @@ pub mod hexviewer;
 pub mod joined;
 pub mod joined2;
 pub mod replace;
+#[cfg(feature = "serde")]
+pub mod serde_json;
 pub mod slice;
 pub mod style;
 mod utils;
