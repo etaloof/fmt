@@ -83,7 +83,7 @@ mod tests {
     }
 
     #[test]
-    fn test_count_chars_ß() {
+    fn test_count_chars_sharp_s() {
         let item = "ß";
         assert_eq!(CountChars::count(item), 1);
     }
@@ -101,13 +101,13 @@ mod tests {
     }
 
     #[test]
-    fn test_count_chars_π() {
+    fn test_count_chars_pi() {
         let item = "π";
         assert_eq!(CountChars::count(item), 1);
     }
 
     #[test]
-    fn test_count_chars_好() {
+    fn test_count_chars_hao() {
         let item = "好";
         assert_eq!(CountChars::count(item), 1);
     }
