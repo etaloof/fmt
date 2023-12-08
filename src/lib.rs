@@ -2,13 +2,14 @@
 pub mod adhoc;
 pub mod count_bytes;
 pub mod count_chars;
-pub mod custom;
 pub mod either;
 pub mod hex;
 pub mod hexslice;
 pub mod hexviewer;
+pub mod iter;
 pub mod joined;
 pub mod joined2;
+pub mod map;
 pub mod pad;
 pub mod replace;
 #[cfg(feature = "serde")]

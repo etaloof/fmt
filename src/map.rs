@@ -3,42 +3,51 @@ use std::{
     fmt::{Debug, Display, Formatter},
 };
 
-pub struct Iter<'a, I, S>
+pub struct Map<I, F, S>
 where
+    F: FnMut(S::Item) -> I,
+    S: Iterator,
     I: Display,
-    S: Iterator<Item = I>,
 {
-    item: Cell<Option<&'a mut S>>,
+    item: Cell<Option<S>>,
+    f: Cell<Option<F>>,
 }
 
-impl<'a, I, S> Iter<'a, I, S>
+impl<I, F, S> Map<I, F, S>
 where
+    F: FnMut(S::Item) -> I,
+    S: Iterator,
     I: Display,
-    S: Iterator<Item = I>,
 {
-    pub fn new(item: &'a mut S) -> Self {
+    pub fn new(item: S, f: F) -> Self {
         Self {
             item: Cell::new(Some(item)),
+            f: Cell::new(Some(f)),
         }
     }
 }
 
-impl<'a, I: Display, S> Display for Iter<'a, I, S>
+impl<I, F, S> Display for Map<I, F, S>
 where
-    S: Iterator<Item = I>,
+    F: FnMut(S::Item) -> I,
+    S: Iterator,
+    I: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let iter = self.item.replace(None).ok_or(Default::default())?;
-        for item in iter {
+        let func = self.f.replace(None).ok_or(Default::default())?;
+        for item in iter.map(func) {
             writeln!(f, "{}", item)?;
         }
         Ok(())
     }
 }
 
-impl<'a, I: Display, S> Debug for Iter<'a, I, S>
+impl<I, F, S> Debug for Map<I, F, S>
 where
-    S: Iterator<Item = I>,
+    F: FnMut(S::Item) -> I,
+    S: Iterator,
+    I: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         Display::fmt(self, f)
@@ -47,37 +56,39 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::convert::identity;
+
     use super::*;
 
     #[test]
     fn display_prints_items() {
         let items: [i32; 3] = [1, 2, 3];
-        let mut iter = items.into_iter();
-        let iter = Iter::new(&mut iter);
+        let iter = items.into_iter();
+        let iter = Map::new(iter, identity);
         assert_eq!(iter.to_string(), "1\n2\n3\n");
     }
 
     #[test]
     fn display_handles_empty_iter() {
         let items: [i32; 0] = [];
-        let mut iter = items.into_iter();
-        let iter = Iter::new(&mut iter);
+        let iter = items.into_iter();
+        let iter = Map::new(iter, identity);
         assert_eq!(iter.to_string(), "");
     }
 
     #[test]
     fn display_handles_none_iter() {
         let items: Option<i32> = None;
-        let mut iter = items.into_iter();
-        let iter = Iter::new(&mut iter);
+        let iter = items.into_iter();
+        let iter = Map::new(iter, identity);
         assert_eq!(iter.to_string(), "");
     }
 
     #[test]
     fn display_handles_one_item_iter() {
         let items: Option<i32> = Some(1);
-        let mut iter = items.into_iter();
-        let iter = Iter::new(&mut iter);
+        let iter = items.into_iter();
+        let iter = Map::new(iter, identity);
         assert_eq!(iter.to_string(), "1\n");
     }
 
@@ -85,8 +96,8 @@ mod tests {
     #[should_panic]
     fn panics_when_displaying_twice() {
         let items: [i32; 3] = [1, 2, 3];
-        let mut iter = items.into_iter();
-        let iter = Iter::new(&mut iter);
+        let iter = items.into_iter();
+        let iter = Map::new(iter, identity);
         assert_eq!(format!("{}{}", iter, iter), "");
     }
 }
