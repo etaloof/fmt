@@ -68,21 +68,3 @@ where
         Display::fmt(self, f)
     }
 }
-
-trait Bytes {
-    type Item: AsRef<[u8]>;
-    type Iter: Iterator<Item = Self::Item>;
-    fn to_bytes(self) -> Self::Iter;
-}
-
-impl<I, T> Bytes for T
-where
-    T: Iterator<Item = I>,
-    I: AsRef<[u8]>,
-{
-    type Item = I;
-    type Iter = T;
-    fn to_bytes(self) -> Self::Iter {
-        self
-    }
-}
