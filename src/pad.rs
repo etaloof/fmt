@@ -6,14 +6,14 @@ pub enum Alignment {
     Center,
 }
 
-pub struct DisplayPadded<D: Display> {
+pub struct Pad<D: Display> {
     display: D,
     fill_char: char,
     max_length: usize,
     alignment: Alignment,
 }
 
-impl<D: Display> DisplayPadded<D> {
+impl<D: Display> Pad<D> {
     #[inline]
     pub fn new(display: D) -> Self {
         Self {
@@ -58,7 +58,7 @@ impl<D: Display> DisplayPadded<D> {
     }
 }
 
-impl<D: Display> Display for DisplayPadded<D> {
+impl<D: Display> Display for Pad<D> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         struct Counter<Writer: Write> {
             count: usize,
@@ -134,13 +134,13 @@ impl<D: Display> Display for DisplayPadded<D> {
 
 #[cfg(test)]
 mod tests {
-    use crate::display_padded::{Alignment, DisplayPadded};
+    use crate::pad::{Alignment, Pad};
 
     #[test]
     fn test_space_lpad3() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy).aligned(Alignment::Left).padded(3);
+        let actual = Pad::new(dummy).aligned(Alignment::Left).padded(3);
 
         assert_eq!(actual.to_string(), "  1")
     }
@@ -149,9 +149,7 @@ mod tests {
     fn test_space_lpad_noop() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
-            .aligned(Alignment::Left)
-            .padded(dummy.len());
+        let actual = Pad::new(dummy).aligned(Alignment::Left).padded(dummy.len());
 
         assert_eq!(actual.to_string(), dummy)
     }
@@ -160,9 +158,7 @@ mod tests {
     fn test_space_rpad3() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
-            .aligned(Alignment::Right)
-            .padded(3);
+        let actual = Pad::new(dummy).aligned(Alignment::Right).padded(3);
 
         assert_eq!(actual.to_string(), "1  ")
     }
@@ -171,7 +167,7 @@ mod tests {
     fn test_space_rpad_noop() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Right)
             .padded(dummy.len());
 
@@ -182,7 +178,7 @@ mod tests {
     fn test_space_cpad_noop() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Center)
             .padded(dummy.len());
 
@@ -193,9 +189,7 @@ mod tests {
     fn test_space_cpad2() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
-            .aligned(Alignment::Center)
-            .padded(2);
+        let actual = Pad::new(dummy).aligned(Alignment::Center).padded(2);
 
         assert_eq!(actual.to_string(), "1 ")
     }
@@ -204,9 +198,7 @@ mod tests {
     fn test_space_cpad3() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
-            .aligned(Alignment::Center)
-            .padded(3);
+        let actual = Pad::new(dummy).aligned(Alignment::Center).padded(3);
 
         assert_eq!(actual.to_string(), " 1 ")
     }
@@ -215,9 +207,7 @@ mod tests {
     fn test_space_cpad4() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
-            .aligned(Alignment::Center)
-            .padded(4);
+        let actual = Pad::new(dummy).aligned(Alignment::Center).padded(4);
 
         assert_eq!(actual.to_string(), " 1  ")
     }
@@ -226,7 +216,7 @@ mod tests {
     fn test_asterisk_lpad3() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Left)
             .padded(3)
             .fill_char('*');
@@ -238,7 +228,7 @@ mod tests {
     fn test_asterisk_lpad_noop() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Left)
             .padded(dummy.len())
             .fill_char('*');
@@ -250,7 +240,7 @@ mod tests {
     fn test_asterisk_rpad3() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Right)
             .padded(3)
             .fill_char('*');
@@ -262,7 +252,7 @@ mod tests {
     fn test_asterisk_rpad_noop() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Right)
             .padded(dummy.len())
             .fill_char('*');
@@ -274,7 +264,7 @@ mod tests {
     fn test_asterisk_cpad_noop() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Center)
             .padded(dummy.len())
             .fill_char('*');
@@ -286,7 +276,7 @@ mod tests {
     fn test_asterisk_cpad2() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Center)
             .padded(2)
             .fill_char('*');
@@ -298,7 +288,7 @@ mod tests {
     fn test_asterisk_cpad3() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Center)
             .padded(3)
             .fill_char('*');
@@ -310,7 +300,7 @@ mod tests {
     fn test_asterisk_cpad4() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Center)
             .padded(4)
             .fill_char('*');
@@ -322,7 +312,7 @@ mod tests {
     fn test_dash_lpad3() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Left)
             .padded(3)
             .fill_char('-');
@@ -334,7 +324,7 @@ mod tests {
     fn test_dash_lpad_noop() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Left)
             .padded(dummy.len())
             .fill_char('-');
@@ -346,7 +336,7 @@ mod tests {
     fn test_dash_rpad3() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Right)
             .padded(3)
             .fill_char('-');
@@ -358,7 +348,7 @@ mod tests {
     fn test_dash_rpad_noop() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Right)
             .padded(dummy.len())
             .fill_char('-');
@@ -370,7 +360,7 @@ mod tests {
     fn test_dash_cpad_noop() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Center)
             .padded(dummy.len())
             .fill_char('-');
@@ -382,7 +372,7 @@ mod tests {
     fn test_dash_cpad2() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Center)
             .padded(2)
             .fill_char('-');
@@ -394,7 +384,7 @@ mod tests {
     fn test_dash_cpad3() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Center)
             .padded(3)
             .fill_char('-');
@@ -406,7 +396,7 @@ mod tests {
     fn test_dash_cpad4() {
         let dummy = "1";
 
-        let actual = DisplayPadded::new(dummy)
+        let actual = Pad::new(dummy)
             .aligned(Alignment::Center)
             .padded(4)
             .fill_char('-');

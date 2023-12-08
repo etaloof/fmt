@@ -3,13 +3,13 @@ pub mod adhoc;
 pub mod count_bytes;
 pub mod count_chars;
 pub mod custom;
-pub mod display_padded;
 pub mod either;
 pub mod hex;
 pub mod hexslice;
 pub mod hexviewer;
 pub mod joined;
 pub mod joined2;
+pub mod pad;
 pub mod replace;
 #[cfg(feature = "serde")]
 pub mod serde_json;
