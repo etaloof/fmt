@@ -1,36 +1,35 @@
 /// Formats an iterator by piping it to `hexyl`.
+use std::fmt::{Debug, Display, Formatter};
 use std::{
-    cell::UnsafeCell,
-    fmt::{Debug, Display, Formatter},
-};
-use std::{
+    cell::Cell,
     io::Write,
     process::{Command, Stdio},
 };
 
-pub struct Iter<I, S>
+pub struct Iter<S>
 where
-    I: AsRef<[u8]>,
-    S: Iterator<Item = I>,
+    S: Iterator,
+    S::Item: AsRef<[u8]>,
 {
-    item: UnsafeCell<Option<S>>,
+    item: Cell<Option<S>>,
 }
 
-impl<I, S> Iter<I, S>
+impl<S> Iter<S>
 where
-    I: AsRef<[u8]>,
-    S: Iterator<Item = I>,
+    S: Iterator,
+    S::Item: AsRef<[u8]>,
 {
     pub fn new(item: S) -> Self {
         Self {
-            item: UnsafeCell::new(Some(item)),
+            item: Cell::new(Some(item)),
         }
     }
 }
 
-impl<I: AsRef<[u8]>, S> Display for Iter<I, S>
+impl<S> Display for Iter<S>
 where
-    S: Iterator<Item = I>,
+    S: Iterator,
+    S::Item: AsRef<[u8]>,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let mut child = Command::new("hexyl")
@@ -39,9 +38,9 @@ where
             .stdout(Stdio::piped())
             .spawn()
             .unwrap();
-        let iter = std::mem::take(unsafe { &mut *self.item.get() });
+        let iter = self.item.replace(None).ok_or(Default::default())?;
         let mut stdin = child.stdin.take().unwrap();
-        for item in iter.unwrap() {
+        for item in iter {
             stdin.write(item.as_ref()).unwrap();
         }
         // to prevent deadlock
@@ -60,9 +59,10 @@ where
     }
 }
 
-impl<I: AsRef<[u8]>, S> Debug for Iter<I, S>
+impl<S> Debug for Iter<S>
 where
-    S: Iterator<Item = I>,
+    S: Iterator,
+    S::Item: AsRef<[u8]>,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         Display::fmt(self, f)
