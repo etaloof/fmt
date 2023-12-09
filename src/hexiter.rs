@@ -1,42 +1,62 @@
-use std::fmt::{Display, Formatter, LowerHex, Write};
+use std::{
+    cell::Cell,
+    fmt::{Display, Formatter, LowerHex},
+    iter::Map,
+};
 
-use crate::{count::Counter, Align};
+use crate::{
+    adhoc2::{Disp, FormatFunc},
+    joined::DisplayIteratorJoined,
+};
 
-pub struct HexIter<I: Iterator<Item = H>, H: LowerHex> {
-    item: I,
+pub struct HexIter<I>
+where
+    I: Iterator,
+    I::Item: LowerHex,
+{
+    item: Cell<
+        Option<
+            DisplayIteratorJoined<
+                Map<I, fn(I::Item) -> Disp<I::Item>>,
+                Disp<I::Item>,
+                &'static str,
+            >,
+        >,
+    >,
 }
 
-impl<I, H> HexIter<I, H>
+impl<I> HexIter<I>
 where
-    I: Iterator<Item = H>,
-    H: LowerHex,
+    I: Iterator,
+    I::Item: LowerHex,
 {
-    pub fn new<J>(item: J) -> Self
+    pub fn new<J>(iter: J) -> Self
     where
-        J: IntoIterator<Item = H>,
-        J::IntoIter = I,
+        J: IntoIterator<IntoIter = I>,
     {
-        Self { item }
+        type Item<I> = <I as Iterator>::Item;
+        type MapFunc<I> = fn(Item<I>) -> Disp<Item<I>>;
+
+        let separator = ", ";
+        let iter = DisplayIteratorJoined::new(
+            iter.into_iter().map(
+                (|x| Disp::new(x, (|x, f| write!(f, "{:x}", x)) as FormatFunc<_>)) as MapFunc<I>,
+            ),
+            separator,
+        );
+        Self {
+            item: Cell::new(Some(iter)),
+        }
     }
 }
 
-impl<I: Iterator<Item = H>, H: LowerHex> Display for HexIter<I, H> {
+impl<I> Display for HexIter<I>
+where
+    I: Iterator,
+    I::Item: LowerHex,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let string = format!("{}", self.item);
-        match self.align {
-            Align::Right => {
-                for _ in string.len()..self.len {
-                    f.write_char(self.fill_char)?;
-                }
-                f.write_str(&string)?;
-            },
-            Align::Left => {
-                f.write_str(&string)?;
-                for _ in string.len()..self.len {
-                    f.write_char(self.fill_char)?;
-                }
-            },
-        }
-        f.write_str("")
+        let item = self.item.replace(None).ok_or(Default::default())?;
+        write!(f, "{}", item)
     }
 }
