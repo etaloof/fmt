@@ -1,100 +1,100 @@
 use std::{fmt::Formatter, marker::PhantomData};
 
-pub struct F<'a, S: FormatStyle> {
-    s: S,
-    st: &'a S::Type,
+pub struct Style<'a, S: FormatStyle> {
+    format_style: S,
+    item: &'a S::Item,
 }
 
-impl<'a, T: std::fmt::Display> F<'a, Display<T>> {
-    pub fn new_display(st: &'a T) -> Self {
-        F {
-            s: Display(PhantomData),
-            st,
+impl<'a, T: std::fmt::Display> Style<'a, Display<T>> {
+    pub fn new_display(item: &'a T) -> Self {
+        Style {
+            format_style: Display(PhantomData),
+            item,
         }
     }
 }
 
-impl<'a, T: std::fmt::Debug> F<'a, Debug<T>> {
-    pub fn new_debug(st: &'a T) -> Self {
-        F {
-            s: Debug(PhantomData),
-            st,
+impl<'a, T: std::fmt::Debug> Style<'a, Debug<T>> {
+    pub fn new_debug(item: &'a T) -> Self {
+        Style {
+            format_style: Debug(PhantomData),
+            item,
         }
     }
 }
 
-impl<'a, T: std::fmt::Octal> F<'a, Octal<T>> {
-    pub fn new_octal(st: &'a T) -> Self {
-        F {
-            s: Octal(PhantomData),
-            st,
+impl<'a, T: std::fmt::Octal> Style<'a, Octal<T>> {
+    pub fn new_octal(item: &'a T) -> Self {
+        Style {
+            format_style: Octal(PhantomData),
+            item,
         }
     }
 }
 
-impl<'a, T: std::fmt::Binary> F<'a, Binary<T>> {
-    pub fn new_binary(st: &'a T) -> Self {
-        F {
-            s: Binary(PhantomData),
-            st,
+impl<'a, T: std::fmt::Binary> Style<'a, Binary<T>> {
+    pub fn new_binary(item: &'a T) -> Self {
+        Style {
+            format_style: Binary(PhantomData),
+            item,
         }
     }
 }
 
-impl<'a, T: std::fmt::LowerHex> F<'a, LowerHex<T>> {
-    pub fn new_lower_hex(st: &'a T) -> Self {
-        F {
-            s: LowerHex(PhantomData),
-            st,
+impl<'a, T: std::fmt::LowerHex> Style<'a, LowerHex<T>> {
+    pub fn new_lower_hex(item: &'a T) -> Self {
+        Style {
+            format_style: LowerHex(PhantomData),
+            item,
         }
     }
 }
 
-impl<'a, T: std::fmt::UpperHex> F<'a, UpperHex<T>> {
-    pub fn new_upper_hex(st: &'a T) -> Self {
-        F {
-            s: UpperHex(PhantomData),
-            st,
+impl<'a, T: std::fmt::UpperHex> Style<'a, UpperHex<T>> {
+    pub fn new_upper_hex(item: &'a T) -> Self {
+        Style {
+            format_style: UpperHex(PhantomData),
+            item,
         }
     }
 }
 
-impl<'a, T: std::fmt::LowerExp> F<'a, LowerExp<T>> {
-    pub fn new_lower_exp(st: &'a T) -> Self {
-        F {
-            s: LowerExp(PhantomData),
-            st,
+impl<'a, T: std::fmt::LowerExp> Style<'a, LowerExp<T>> {
+    pub fn new_lower_exp(item: &'a T) -> Self {
+        Style {
+            format_style: LowerExp(PhantomData),
+            item,
         }
     }
 }
 
-impl<'a, T: std::fmt::UpperExp> F<'a, UpperExp<T>> {
-    pub fn new_upper_exp(st: &'a T) -> Self {
-        F {
-            s: UpperExp(PhantomData),
-            st,
+impl<'a, T: std::fmt::UpperExp> Style<'a, UpperExp<T>> {
+    pub fn new_upper_exp(item: &'a T) -> Self {
+        Style {
+            format_style: UpperExp(PhantomData),
+            item,
         }
     }
 }
 
-impl<'a, T: std::fmt::Pointer> F<'a, Pointer<T>> {
-    pub fn new_pointer(st: &'a T) -> Self {
-        F {
-            s: Pointer(PhantomData),
-            st,
+impl<'a, T: std::fmt::Pointer> Style<'a, Pointer<T>> {
+    pub fn new_pointer(item: &'a T) -> Self {
+        Style {
+            format_style: Pointer(PhantomData),
+            item,
         }
     }
 }
 
-impl<'a, S: FormatStyle> std::fmt::Display for F<'a, S> {
+impl<'a, S: FormatStyle> std::fmt::Display for Style<'a, S> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.s.fmt(self.st, f)
+        self.format_style.fmt(self.item, f)
     }
 }
 
 pub trait FormatStyle: Copy {
-    type Type;
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result;
+    type Item;
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result;
 }
 
 struct Display<T>(PhantomData<*const T>);
@@ -108,10 +108,10 @@ impl<T> Clone for Display<T> {
 }
 
 impl<T: std::fmt::Display> FormatStyle for Display<T> {
-    type Type = T;
+    type Item = T;
 
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", item)
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(item, f)
     }
 }
 
@@ -126,10 +126,10 @@ impl<T> Clone for Debug<T> {
 }
 
 impl<T: std::fmt::Debug> FormatStyle for Debug<T> {
-    type Type = T;
+    type Item = T;
 
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", item)
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(item, f)
     }
 }
 
@@ -144,10 +144,10 @@ impl<T> Clone for Octal<T> {
 }
 
 impl<T: std::fmt::Octal> FormatStyle for Octal<T> {
-    type Type = T;
+    type Item = T;
 
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:o}", item)
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Octal::fmt(item, f)
     }
 }
 
@@ -162,10 +162,10 @@ impl<T> Clone for Binary<T> {
 }
 
 impl<T: std::fmt::Binary> FormatStyle for Binary<T> {
-    type Type = T;
+    type Item = T;
 
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:b}", item)
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Binary::fmt(item, f)
     }
 }
 
@@ -180,10 +180,10 @@ impl<T> Clone for LowerHex<T> {
 }
 
 impl<T: std::fmt::LowerHex> FormatStyle for LowerHex<T> {
-    type Type = T;
+    type Item = T;
 
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:x}", item)
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::LowerHex::fmt(item, f)
     }
 }
 
@@ -198,10 +198,10 @@ impl<T> Clone for UpperHex<T> {
 }
 
 impl<T: std::fmt::UpperHex> FormatStyle for UpperHex<T> {
-    type Type = T;
+    type Item = T;
 
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:X}", item)
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::UpperHex::fmt(item, f)
     }
 }
 
@@ -216,10 +216,10 @@ impl<T> Clone for LowerExp<T> {
 }
 
 impl<T: std::fmt::LowerExp> FormatStyle for LowerExp<T> {
-    type Type = T;
+    type Item = T;
 
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:e}", item)
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::LowerExp::fmt(item, f)
     }
 }
 
@@ -234,10 +234,10 @@ impl<T> Clone for UpperExp<T> {
 }
 
 impl<T: std::fmt::UpperExp> FormatStyle for UpperExp<T> {
-    type Type = T;
+    type Item = T;
 
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:E}", item)
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::UpperExp::fmt(item, f)
     }
 }
 
@@ -252,10 +252,10 @@ impl<T> Clone for Pointer<T> {
 }
 
 impl<T: std::fmt::Pointer> FormatStyle for Pointer<T> {
-    type Type = T;
+    type Item = T;
 
-    fn fmt<'a>(&self, item: &'a Self::Type, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:p}", *item)
+    fn fmt<'a>(&self, item: &'a Self::Item, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Pointer::fmt(item, f)
     }
 }
 
@@ -263,7 +263,7 @@ impl<T: std::fmt::Pointer> FormatStyle for Pointer<T> {
 mod tests {
     use std::fmt::Formatter;
 
-    use crate::{adhoc::Disp, style::F};
+    use crate::{adhoc::Disp, style::Style};
 
     struct Dummy(u64);
 
@@ -365,7 +365,7 @@ mod tests {
 
         let actual = dummy.display_repr();
 
-        assert_eq!(actual, F::new_display(&actual).to_string())
+        assert_eq!(actual, Style::new_display(&actual).to_string())
     }
 
     #[test]
@@ -374,7 +374,7 @@ mod tests {
 
         let actual = dummy.debug_repr();
 
-        assert_eq!(actual.to_string(), F::new_debug(&dummy).to_string())
+        assert_eq!(actual.to_string(), Style::new_debug(&dummy).to_string())
     }
 
     #[test]
@@ -383,7 +383,7 @@ mod tests {
 
         let actual = dummy.binary_repr();
 
-        assert_eq!(actual.to_string(), F::new_binary(&dummy).to_string())
+        assert_eq!(actual.to_string(), Style::new_binary(&dummy).to_string())
     }
 
     #[test]
@@ -392,7 +392,7 @@ mod tests {
 
         let actual = dummy.octal_repr();
 
-        assert_eq!(actual.to_string(), F::new_octal(&dummy).to_string())
+        assert_eq!(actual.to_string(), Style::new_octal(&dummy).to_string())
     }
 
     #[test]
@@ -401,7 +401,7 @@ mod tests {
 
         let actual = dummy.lower_hex_repr();
 
-        assert_eq!(actual.to_string(), F::new_lower_hex(&dummy).to_string())
+        assert_eq!(actual.to_string(), Style::new_lower_hex(&dummy).to_string())
     }
 
     #[test]
@@ -410,7 +410,7 @@ mod tests {
 
         let actual = dummy.upper_hex_repr();
 
-        assert_eq!(actual.to_string(), F::new_upper_hex(&dummy).to_string())
+        assert_eq!(actual.to_string(), Style::new_upper_hex(&dummy).to_string())
     }
 
     #[test]
@@ -419,7 +419,7 @@ mod tests {
 
         let actual = dummy.lower_exp_repr();
 
-        assert_eq!(actual.to_string(), F::new_lower_exp(&dummy).to_string())
+        assert_eq!(actual.to_string(), Style::new_lower_exp(&dummy).to_string())
     }
 
     #[test]
@@ -428,7 +428,7 @@ mod tests {
 
         let actual = dummy.upper_exp_repr();
 
-        assert_eq!(actual.to_string(), F::new_upper_exp(&dummy).to_string())
+        assert_eq!(actual.to_string(), Style::new_upper_exp(&dummy).to_string())
     }
 
     #[test]
@@ -437,6 +437,6 @@ mod tests {
 
         let actual = dummy.pointer_repr();
 
-        assert_eq!(actual.to_string(), F::new_pointer(&dummy).to_string())
+        assert_eq!(actual.to_string(), Style::new_pointer(&dummy).to_string())
     }
 }
