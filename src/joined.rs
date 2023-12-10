@@ -5,23 +5,26 @@ use std::{
 
 use crate::utils::LastIterationIterator;
 
-pub struct DisplayIteratorJoined<Iter, I, S>
+pub struct DisplayIteratorJoined<I, S>
 where
-    Iter: Iterator<Item = I>,
-    I: Display,
+    I: Iterator,
+    I::Item: Display,
     S: Display,
 {
-    iter: Cell<Option<Iter>>,
+    iter: Cell<Option<I>>,
     separator: S,
 }
 
-impl<Iter, I, S> DisplayIteratorJoined<Iter, I, S>
+impl<I, S> DisplayIteratorJoined<I, S>
 where
-    Iter: Iterator<Item = I>,
-    I: Display,
+    I: Iterator,
+    I::Item: Display,
     S: Display,
 {
-    pub fn new<II: IntoIterator<IntoIter = Iter>>(iter: II, separator: S) -> Self {
+    pub fn new<J>(iter: J, separator: S) -> Self
+    where
+        J: IntoIterator<IntoIter = I>,
+    {
         Self {
             iter: Cell::new(Some(iter.into_iter())),
             separator,
@@ -29,10 +32,10 @@ where
     }
 }
 
-impl<Iter, I, S> Display for DisplayIteratorJoined<Iter, I, S>
+impl<I, S> Display for DisplayIteratorJoined<I, S>
 where
-    Iter: Iterator<Item = I>,
-    I: Display,
+    I: Iterator,
+    I::Item: Display,
     S: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

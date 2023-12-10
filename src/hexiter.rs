@@ -13,15 +13,7 @@ where
     I: Iterator,
     I::Item: LowerHex,
 {
-    item: Cell<
-        Option<
-            DisplayIteratorJoined<
-                Map<I, fn(I::Item) -> Disp<I::Item>>,
-                Disp<I::Item>,
-                &'static str,
-            >,
-        >,
-    >,
+    item: Cell<Option<DisplayIteratorJoined<Map<I, MapFunc<I>>, &'static str>>>,
 }
 
 impl<I> HexIter<I>

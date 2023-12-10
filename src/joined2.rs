@@ -2,30 +2,29 @@ use std::fmt::{Display, Formatter};
 
 use crate::utils::LastIterationIterator;
 
-pub struct DisplayIteratorJoined<Iter, I, S, F>
+pub struct DisplayIteratorJoined<I, S, F>
 where
-    Iter: Iterator<Item = I> + Clone,
-    I: Display,
+    I: Iterator + Clone,
+    I::Item: Display,
     S: Display,
     F: Display,
 {
-    iter: Iter,
+    iter: I,
     separator: S,
     final_separator: F,
 }
 
-impl<Iter, I, S, F> DisplayIteratorJoined<Iter, I, S, F>
+impl<I, S, F> DisplayIteratorJoined<I, S, F>
 where
-    Iter: Iterator<Item = I> + Clone,
-    I: Display,
+    I: Iterator + Clone,
+    I::Item: Display,
     S: Display,
     F: Display,
 {
-    pub fn new<II: IntoIterator<IntoIter = Iter>>(
-        iter: II,
-        separator: S,
-        final_separator: F,
-    ) -> Self {
+    pub fn new<J>(iter: J, separator: S, final_separator: F) -> Self
+    where
+        J: IntoIterator<IntoIter = I>,
+    {
         Self {
             iter: iter.into_iter(),
             separator,
@@ -33,15 +32,15 @@ where
         }
     }
 
-    pub fn iter(&self) -> Iter {
+    pub fn iter(&self) -> I {
         self.iter.clone()
     }
 }
 
-impl<Iter, I, S, F> Display for DisplayIteratorJoined<Iter, I, S, F>
+impl<I, S, F> Display for DisplayIteratorJoined<I, S, F>
 where
-    Iter: Iterator<Item = I> + Clone,
-    I: Display,
+    I: Iterator + Clone,
+    I::Item: Display,
     S: Display,
     F: Display,
 {
