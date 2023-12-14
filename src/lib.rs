@@ -16,7 +16,7 @@ pub mod replace;
 pub mod serde_json;
 pub mod slice;
 pub mod style;
-mod utils;
+pub mod utils;
 
 #[derive(Copy, Clone)]
 pub enum Align {
