@@ -1,3 +1,4 @@
+pub mod adapters;
 pub mod adhoc;
 pub mod adhoc2;
 pub mod count_bytes;
