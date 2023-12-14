@@ -24,6 +24,7 @@ pub enum Align {
     Right,
 }
 
+#[macro_export]
 macro_rules! disp {
     ($d:expr) => {{
         $crate::adhoc::Disp::new($d)
