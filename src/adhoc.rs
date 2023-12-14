@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 
 pub struct Disp<F>
 where
@@ -25,57 +25,40 @@ where
     }
 }
 
+impl<F> Debug for Disp<F>
+where
+    F: for<'a> Fn(&mut Formatter<'a>) -> std::fmt::Result,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        (self.f)(f)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{adapters::Display as DisplayAdapter, utils::LastIterationIterator};
 
     #[derive(Copy, Clone)]
-    struct EchoPoint {
-        row_idx: usize,
-        ampl: usize,
+    struct Datum {
+        authenticity: u8,
+        confidence: u8,
+        is_valid: bool,
     }
 
-    struct ColView {
-        col_idx: usize,
-        echo_points: [EchoPoint; 2],
+    struct Data {
+        entries: Vec<[Datum; 4]>,
     }
 
-    struct Frame {
-        cols: Vec<[EchoPoint; 4]>,
-    }
-
-    impl Frame {
-        pub(crate) fn cols(&self) -> impl Iterator<Item = ColView> + '_ {
-            self.cols.iter().enumerate().flat_map(|(i, &[a, b, c, d])| {
-                [
-                    ColView {
-                        col_idx: i * 2,
-                        echo_points: [a, b],
-                    },
-                    ColView {
-                        col_idx: i * 2 + 1,
-                        echo_points: [c, d],
-                    },
-                ]
-            })
-        }
-    }
-
-    fn custom_display(frame: &Frame) -> impl Display + '_ {
+    fn custom_display(data: &Data) -> impl Display + '_ {
         Disp::new(|f| {
-            for (is_last, c) in LastIterationIterator::new(frame.cols()) {
-                f.debug_list()
-                    .entries(c.echo_points.iter().map(|echo| {
-                        DisplayAdapter::new(Disp::new(|f| {
-                            f.debug_struct("Echo")
-                                .field("col_idx", &c.col_idx)
-                                .field("row_idx", &echo.row_idx)
-                                .field("ampl", &echo.ampl)
-                                .finish()
-                        }))
-                    }))
-                    .finish()?;
+            for (is_last, de) in LastIterationIterator::new(data.entries.iter()) {
+                let iter = de
+                    .iter()
+                    .filter(|d| d.is_valid)
+                    .filter(|d| d.confidence >= 35)
+                    .map(|d| Disp::new(|f| write!(f, "{}", d.authenticity)));
+                f.debug_list().entries(iter).finish()?;
 
                 if !is_last {
                     writeln!(f)?;
@@ -87,191 +70,120 @@ mod tests {
 
     #[test]
     fn test_empty() {
-        let frame = Frame { cols: vec![] };
+        let frame = Data { entries: vec![] };
 
         assert_eq!(custom_display(&frame).to_string(), "");
     }
 
-    const ECHOES_UNFORMATTED: &'static str = r#"[Echo { col_idx: 0, row_idx: 0, ampl: 1 }, Echo { col_idx: 0, row_idx: 1, ampl: 2 }]
-[Echo { col_idx: 1, row_idx: 2, ampl: 3 }, Echo { col_idx: 1, row_idx: 3, ampl: 4 }]
-[Echo { col_idx: 2, row_idx: 0, ampl: 5 }, Echo { col_idx: 2, row_idx: 1, ampl: 6 }]
-[Echo { col_idx: 3, row_idx: 2, ampl: 7 }, Echo { col_idx: 3, row_idx: 3, ampl: 8 }]
-[Echo { col_idx: 4, row_idx: 0, ampl: 9 }, Echo { col_idx: 4, row_idx: 1, ampl: 10 }]
-[Echo { col_idx: 5, row_idx: 2, ampl: 11 }, Echo { col_idx: 5, row_idx: 3, ampl: 12 }]
-[Echo { col_idx: 6, row_idx: 0, ampl: 13 }, Echo { col_idx: 6, row_idx: 1, ampl: 14 }]
-[Echo { col_idx: 7, row_idx: 2, ampl: 15 }, Echo { col_idx: 7, row_idx: 3, ampl: 16 }]"#;
+    const ECHOES_UNFORMATTED: &'static str = r#"[3]
+[7]
+[11]
+[13, 15]"#;
 
     const ECHOES_FORMATTED: &'static str = r#"[
-    Echo {
-        col_idx: 0,
-        row_idx: 0,
-        ampl: 1,
-    },
-    Echo {
-        col_idx: 0,
-        row_idx: 1,
-        ampl: 2,
-    },
+    3,
 ]
 [
-    Echo {
-        col_idx: 1,
-        row_idx: 2,
-        ampl: 3,
-    },
-    Echo {
-        col_idx: 1,
-        row_idx: 3,
-        ampl: 4,
-    },
+    7,
 ]
 [
-    Echo {
-        col_idx: 2,
-        row_idx: 0,
-        ampl: 5,
-    },
-    Echo {
-        col_idx: 2,
-        row_idx: 1,
-        ampl: 6,
-    },
+    11,
 ]
 [
-    Echo {
-        col_idx: 3,
-        row_idx: 2,
-        ampl: 7,
-    },
-    Echo {
-        col_idx: 3,
-        row_idx: 3,
-        ampl: 8,
-    },
-]
-[
-    Echo {
-        col_idx: 4,
-        row_idx: 0,
-        ampl: 9,
-    },
-    Echo {
-        col_idx: 4,
-        row_idx: 1,
-        ampl: 10,
-    },
-]
-[
-    Echo {
-        col_idx: 5,
-        row_idx: 2,
-        ampl: 11,
-    },
-    Echo {
-        col_idx: 5,
-        row_idx: 3,
-        ampl: 12,
-    },
-]
-[
-    Echo {
-        col_idx: 6,
-        row_idx: 0,
-        ampl: 13,
-    },
-    Echo {
-        col_idx: 6,
-        row_idx: 1,
-        ampl: 14,
-    },
-]
-[
-    Echo {
-        col_idx: 7,
-        row_idx: 2,
-        ampl: 15,
-    },
-    Echo {
-        col_idx: 7,
-        row_idx: 3,
-        ampl: 16,
-    },
+    13,
+    15,
 ]"#;
 
     #[test]
     fn test_4x4() {
-        let frame = Frame {
-            cols: vec![
+        let frame = Data {
+            entries: vec![
                 [
-                    EchoPoint {
-                        row_idx: 0,
-                        ampl: 1,
+                    Datum {
+                        authenticity: 0,
+                        confidence: 35,
+                        is_valid: false,
                     },
-                    EchoPoint {
-                        row_idx: 1,
-                        ampl: 2,
+                    Datum {
+                        authenticity: 1,
+                        confidence: 33,
+                        is_valid: false,
                     },
-                    EchoPoint {
-                        row_idx: 2,
-                        ampl: 3,
+                    Datum {
+                        authenticity: 2,
+                        confidence: 65,
+                        is_valid: false,
                     },
-                    EchoPoint {
-                        row_idx: 3,
-                        ampl: 4,
+                    Datum {
+                        authenticity: 3,
+                        confidence: 65,
+                        is_valid: true,
                     },
                 ],
                 [
-                    EchoPoint {
-                        row_idx: 0,
-                        ampl: 5,
+                    Datum {
+                        authenticity: 4,
+                        confidence: 35,
+                        is_valid: false,
                     },
-                    EchoPoint {
-                        row_idx: 1,
-                        ampl: 6,
+                    Datum {
+                        authenticity: 5,
+                        confidence: 33,
+                        is_valid: false,
                     },
-                    EchoPoint {
-                        row_idx: 2,
-                        ampl: 7,
+                    Datum {
+                        authenticity: 6,
+                        confidence: 65,
+                        is_valid: false,
                     },
-                    EchoPoint {
-                        row_idx: 3,
-                        ampl: 8,
-                    },
-                ],
-                [
-                    EchoPoint {
-                        row_idx: 0,
-                        ampl: 9,
-                    },
-                    EchoPoint {
-                        row_idx: 1,
-                        ampl: 10,
-                    },
-                    EchoPoint {
-                        row_idx: 2,
-                        ampl: 11,
-                    },
-                    EchoPoint {
-                        row_idx: 3,
-                        ampl: 12,
+                    Datum {
+                        authenticity: 7,
+                        confidence: 65,
+                        is_valid: true,
                     },
                 ],
                 [
-                    EchoPoint {
-                        row_idx: 0,
-                        ampl: 13,
+                    Datum {
+                        authenticity: 8,
+                        confidence: 35,
+                        is_valid: false,
                     },
-                    EchoPoint {
-                        row_idx: 1,
-                        ampl: 14,
+                    Datum {
+                        authenticity: 9,
+                        confidence: 30,
+                        is_valid: true,
                     },
-                    EchoPoint {
-                        row_idx: 2,
-                        ampl: 15,
+                    Datum {
+                        authenticity: 10,
+                        confidence: 65,
+                        is_valid: false,
                     },
-                    EchoPoint {
-                        row_idx: 3,
-                        ampl: 16,
+                    Datum {
+                        authenticity: 11,
+                        confidence: 65,
+                        is_valid: true,
+                    },
+                ],
+                [
+                    Datum {
+                        authenticity: 12,
+                        confidence: 35,
+                        is_valid: false,
+                    },
+                    Datum {
+                        authenticity: 13,
+                        confidence: 39,
+                        is_valid: true,
+                    },
+                    Datum {
+                        authenticity: 14,
+                        confidence: 65,
+                        is_valid: false,
+                    },
+                    Datum {
+                        authenticity: 15,
+                        confidence: 65,
+                        is_valid: true,
                     },
                 ],
             ],
