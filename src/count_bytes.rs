@@ -1,5 +1,6 @@
 use std::fmt::{Display, Write};
 
+/// Counts the number of characters produced by a `Display` implementation.
 pub struct CountBytes {
     counter: usize,
 }
@@ -9,6 +10,7 @@ impl CountBytes {
         Self { counter: 0 }
     }
 
+    /// Counts the number of bytes produced by a `Display` implementation.
     pub fn count(item: impl Display) -> usize {
         let mut c = Self::new();
         write!(&mut c, "{}", item).unwrap();
