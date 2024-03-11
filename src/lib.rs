@@ -10,6 +10,7 @@ pub mod hexslice;
 pub mod hexviewer;
 pub mod joined;
 pub mod joined2;
+pub mod logic;
 pub mod pad;
 pub mod replace;
 #[cfg(feature = "serde")]
