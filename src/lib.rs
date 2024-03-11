@@ -12,6 +12,7 @@ pub mod joined;
 pub mod joined2;
 pub mod logic;
 pub mod pad;
+pub mod producer;
 pub mod replace;
 #[cfg(feature = "serde")]
 pub mod serde_json;
