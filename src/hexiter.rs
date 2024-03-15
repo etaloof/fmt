@@ -1,57 +1,103 @@
-use std::fmt::{Display, Formatter, LowerHex};
+use std::{
+    fmt::{Display, Formatter, LowerHex},
+    mem::ManuallyDrop,
+    ops::Deref,
+};
 
-use crate::{adhoc2::Disp, joined::DisplayIteratorJoined, producer::DisplayProducer};
+use crate::{adhoc2::Disp, joined::DisplayIteratorJoined};
 
-pub trait IntoRefIterator {
-    type Item;
-
-    type IntoIter: Iterator<Item = Self::Item>;
-
-    fn ref_iter(&self) -> Self::IntoIter;
+union HexIterInner<I, F> {
+    i: ManuallyDrop<I>,
+    f: ManuallyDrop<F>,
 }
 
-impl<'a, I, T> IntoRefIterator for &'a I
+struct HexIter<I, F>
 where
-    &'a I: IntoIterator<Item = &'a T>,
-    I: ?Sized,
-    T: 'a,
+    F: Fn() -> I,
+    I: Iterator,
+    I::Item: LowerHex,
 {
-    type Item = <Self::IntoIter as Iterator>::Item;
-    type IntoIter = <&'a I as IntoIterator>::IntoIter;
+    inner: HexIterInner<I, F>,
+    produce_iterator: fn(&HexIterInner<I, F>) -> I,
+    destruct: fn(&mut HexIterInner<I, F>),
+}
 
-    fn ref_iter(&self) -> Self::IntoIter {
-        self.into_iter()
+impl<I, F> HexIter<I, F>
+where
+    F: Fn() -> I,
+    I: Iterator,
+    I::Item: LowerHex,
+{
+    fn new_fn(closure: F) -> HexIter<I, F> {
+        HexIter {
+            inner: HexIterInner {
+                f: ManuallyDrop::new(closure),
+            },
+            produce_iterator: |inner| (unsafe { &inner.f }.deref())(),
+            destruct: |inner| unsafe { ManuallyDrop::drop(&mut inner.f) },
+        }
+    }
+
+    fn new_copy<II>(iter: II) -> HexIter<I, fn() -> I>
+    where
+        II: IntoIterator<IntoIter = I>,
+        I: Copy,
+    {
+        HexIter {
+            inner: HexIterInner {
+                i: ManuallyDrop::new(iter.into_iter()),
+            },
+            produce_iterator: |inner| *unsafe { &inner.i }.deref(),
+            destruct: |inner| unsafe { ManuallyDrop::drop(&mut inner.i) },
+        }
+    }
+
+    fn new_clone<II>(iter: II) -> HexIter<I, fn() -> I>
+    where
+        II: IntoIterator<IntoIter = I>,
+        I: Clone,
+    {
+        HexIter {
+            inner: HexIterInner {
+                i: ManuallyDrop::new(iter.into_iter()),
+            },
+            produce_iterator: |inner| unsafe { &inner.i }.deref().clone(),
+            destruct: |inner| unsafe { ManuallyDrop::drop(&mut inner.i) },
+        }
+    }
+
+    fn get_iterator(&self) -> I {
+        let f = self.produce_iterator;
+        f(&self.inner)
+    }
+
+    fn destruct(&mut self) {
+        let d = self.destruct;
+        d(&mut self.inner)
     }
 }
 
-struct HexIter<I>
+impl<I, F> Display for HexIter<I, F>
 where
-    I: IntoRefIterator,
-    <I as IntoRefIterator>::Item: LowerHex,
-{
-    iter: I,
-}
-
-impl<I> HexIter<I>
-where
-    I: IntoRefIterator,
-    <I as IntoRefIterator>::Item: LowerHex,
-{
-    fn new(iter: I) -> Self {
-        Self { iter }
-    }
-}
-
-impl<I> Display for HexIter<I>
-where
-    I: IntoRefIterator,
-    <I as IntoRefIterator>::Item: LowerHex,
+    F: Fn() -> I,
+    I: Iterator,
+    I::Item: LowerHex,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let map: MapFunc<I::IntoIter> = |x| Disp::new(x, LowerHex::fmt);
-        let iter = self.iter.ref_iter().map(map);
+        let iter = self.get_iterator().map(|x| Disp::new(x, LowerHex::fmt));
         let iter = DisplayIteratorJoined::new(iter, ", ");
         iter.fmt(f)
+    }
+}
+
+impl<I, F> Drop for HexIter<I, F>
+where
+    F: Fn() -> I,
+    I: Iterator,
+    I::Item: LowerHex,
+{
+    fn drop(&mut self) {
+        self.destruct()
     }
 }
 
@@ -59,37 +105,56 @@ type MapFunc<I> = fn(<I as Iterator>::Item) -> Disp<<I as Iterator>::Item>;
 
 #[cfg(test)]
 mod tests {
-    use std::fmt::Display;
-
     use super::*;
 
     #[test]
     fn test_slice() {
-        let slice = HexIter::new(&[0xa, 0xb, 0xc]);
+        let data: [i32; 3] = [0xa, 0xb, 0xc];
+        let slice = HexIter::new_clone(&data);
         assert_eq!(slice.to_string(), "a, b, c");
     }
 
     #[test]
     fn test_slice2() {
-        let slice = HexIter::new(&[0xff, 0xff]);
+        let data: [i32; 2] = [0xff, 0xff];
+        let slice = HexIter::new_clone(&data);
         assert_eq!(slice.to_string(), "ff, ff");
     }
 
     #[test]
     fn test_empty_slice() {
-        let slice: HexIter<&[u32]> = HexIter::new(&[]);
+        let data: [i32; 0] = [];
+        let slice = HexIter::new_clone(&data);
         assert_eq!(slice.to_string(), "");
     }
 
     #[test]
     fn test_single_element_slice() {
-        let slice = HexIter::new(&[0xa]);
+        let data: [i32; 1] = [0xa];
+        let slice = HexIter::new_clone(&data);
         assert_eq!(slice.to_string(), "a");
     }
 
     #[test]
     fn test_filtered_slice() {
-        let slice = HexIter::new([0xa, 0xb, 0xc].iter().filter(|x| *x & 0x1 == 0x1));
+        let slice = HexIter::new_fn(|| [0xa, 0xb, 0xc].iter().filter(|x| *x & 0x1 == 0x1));
+        assert_eq!(slice.to_string(), "a, b");
+    }
+
+    #[test]
+    fn test_filtered_vec() {
+        #[derive(Copy, Clone)]
+        struct CopyIter;
+
+        impl Iterator for CopyIter {
+            type Item = u32;
+
+            fn next(&mut self) -> Option<Self::Item> {
+                Some(0)
+            }
+        }
+
+        let slice = HexIter::new_copy(CopyIter);
         assert_eq!(slice.to_string(), "a, b");
     }
 }
