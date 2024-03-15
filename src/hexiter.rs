@@ -2,64 +2,60 @@ use std::fmt::{Display, Formatter, LowerHex};
 
 use crate::{adhoc2::Disp, joined::DisplayIteratorJoined, producer::DisplayProducer};
 
-trait IteratorProducer {
-    /// The iterator produced by this IteratorProducer.
-    type Iterator: Iterator;
+pub trait IntoRefIterator {
+    type Item;
 
-    fn produce_iterator(&self) -> Self::Iterator;
+    type IntoIter: Iterator<Item = Self::Item>;
+
+    fn ref_iter(&self) -> Self::IntoIter;
 }
 
-impl<I: Iterator, F: Fn() -> I> IteratorProducer for F {
-    type Iterator = I;
-
-    fn produce_iterator(&self) -> Self::Iterator {
-        self()
-    }
-}
-
-impl<'a, T> IteratorProducer for &'a [T]
+impl<'a, I, T> IntoRefIterator for &'a I
 where
-    T: LowerHex,
+    &'a I: IntoIterator<Item = &'a T>,
+    I: ?Sized,
+    T: 'a,
 {
-    type Iterator = std::slice::Iter<'a, T>;
+    type Item = <Self::IntoIter as Iterator>::Item;
+    type IntoIter = <&'a I as IntoIterator>::IntoIter;
 
-    fn produce_iterator(&self) -> Self::Iterator {
+    fn ref_iter(&self) -> Self::IntoIter {
         self.into_iter()
     }
 }
 
-type MapFunc<I> = fn(<I as Iterator>::Item) -> Disp<<I as Iterator>::Item>;
-
-pub struct HexIter<J>
+struct HexIter<I>
 where
-    J: IteratorProducer,
-    <<J as IteratorProducer>::Iterator as IntoIterator>::Item: LowerHex,
+    I: IntoRefIterator,
+    <I as IntoRefIterator>::Item: LowerHex,
 {
-    iter: J,
+    iter: I,
 }
 
-impl<J> HexIter<J>
+impl<I> HexIter<I>
 where
-    J: IteratorProducer,
-    <<J as IteratorProducer>::Iterator as IntoIterator>::Item: LowerHex,
+    I: IntoRefIterator,
+    <I as IntoRefIterator>::Item: LowerHex,
 {
-    pub fn new(iter: J) -> Self {
+    fn new(iter: I) -> Self {
         Self { iter }
     }
 }
 
-impl<J> Display for HexIter<J>
+impl<I> Display for HexIter<I>
 where
-    J: IteratorProducer,
-    <<J as IteratorProducer>::Iterator as IntoIterator>::Item: LowerHex,
+    I: IntoRefIterator,
+    <I as IntoRefIterator>::Item: LowerHex,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let map: MapFunc<J::Iterator> = |x| Disp::new(x, LowerHex::fmt);
-        let iter = self.iter.produce_iterator().map(map);
+        let map: MapFunc<I::IntoIter> = |x| Disp::new(x, LowerHex::fmt);
+        let iter = self.iter.ref_iter().map(map);
         let iter = DisplayIteratorJoined::new(iter, ", ");
         iter.fmt(f)
     }
 }
+
+type MapFunc<I> = fn(<I as Iterator>::Item) -> Disp<<I as Iterator>::Item>;
 
 #[cfg(test)]
 mod tests {
