@@ -5,7 +5,6 @@ pub mod count_bytes;
 pub mod count_chars;
 pub mod either;
 pub mod hex;
-pub mod hexiter;
 pub mod hexslice;
 pub mod hexviewer;
 pub mod joined;
