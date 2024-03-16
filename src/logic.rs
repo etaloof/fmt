@@ -19,7 +19,7 @@ impl Display for Empty {
 }
 
 #[must_use = "formatting helpers do nothing unless you use their `Display` implementation, e.g. with `.to_string()` or `format!`"]
-struct Optional<D: Display>(Conditional<D, Empty>);
+pub struct Optional<D: Display>(Conditional<D, Empty>);
 
 impl<D: Display> Optional<D> {
     pub fn new(cond: bool, value: D) -> Self {
@@ -38,7 +38,7 @@ where
 }
 
 #[must_use = "formatting helpers do nothing unless you use their `Display` implementation, e.g. with `.to_string()` or `format!`"]
-struct Conditional<T, F> {
+pub struct Conditional<T, F> {
     cond: bool,
     left: T,
     right: F,
@@ -72,7 +72,7 @@ where
 
 /// Concatenates two `Display`s.
 #[must_use = "formatting helpers do nothing unless you use their `Display` implementation, e.g. with `.to_string()` or `format!`"]
-struct Concat<L, R>
+pub struct Concat<L, R>
 where
     L: Display,
     R: Display,
@@ -86,7 +86,8 @@ where
     L: Display,
     R: Display,
 {
-    fn new(left: L, right: R) -> Self {
+    #[inline]
+    pub fn new(left: L, right: R) -> Self {
         Self { left, right }
     }
 }
@@ -106,7 +107,7 @@ where
 
 /// Concatenates three `Display`s.
 #[must_use = "formatting helpers do nothing unless you use their `Display` implementation, e.g. with `.to_string()` or `format!`"]
-struct Concat3<L, M, R>
+pub struct Concat3<L, M, R>
 where
     L: Display,
     M: Display,
@@ -123,7 +124,8 @@ where
     M: Display,
     R: Display,
 {
-    fn new(left: L, middle: M, right: R) -> Self {
+    #[inline]
+    pub fn new(left: L, middle: M, right: R) -> Self {
         Self {
             left,
             middle,
@@ -149,7 +151,7 @@ where
 
 /// Concatenates four `Display`s.
 #[must_use = "formatting helpers do nothing unless you use their `Display` implementation, e.g. with `.to_string()` or `format!`"]
-struct Concat4<L, M, R, S>
+pub struct Concat4<L, M, R, S>
 where
     L: Display,
     M: Display,
@@ -169,7 +171,8 @@ where
     R: Display,
     S: Display,
 {
-    fn new(outer_left: L, inner_left: M, inner_right: R, outer_right: S) -> Self {
+    #[inline]
+    pub fn new(outer_left: L, inner_left: M, inner_right: R, outer_right: S) -> Self {
         Self {
             outer_left,
             inner_left,
@@ -198,7 +201,7 @@ where
 
 /// Concatenates `N` `Display`s.
 #[must_use = "formatting helpers do nothing unless you use their `Display` implementation, e.g. with `.to_string()` or `format!`"]
-struct ConcatN<D, const N: usize>
+pub struct ConcatN<D, const N: usize>
 where
     D: Display,
 {
@@ -209,7 +212,8 @@ impl<D, const N: usize> ConcatN<D, N>
 where
     D: Display,
 {
-    fn new(inner: [D; N]) -> Self {
+    #[inline]
+    pub fn new(inner: [D; N]) -> Self {
         Self { inner }
     }
 }

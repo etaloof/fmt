@@ -8,12 +8,14 @@ pub struct Disp<T> {
 }
 
 impl<T> Disp<T> {
-    pub(crate) fn new(item: T, func: FormatFunc<T>) -> Self {
+    #[inline]
+    pub fn new(item: T, func: FormatFunc<T>) -> Self {
         Self { item, func }
     }
 }
 
 impl<T> Display for Disp<T> {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         (self.func)(&self.item, f)
     }
