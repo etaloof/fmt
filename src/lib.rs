@@ -1,6 +1,7 @@
 pub mod adapters;
 pub mod adhoc;
 pub mod adhoc2;
+pub mod color;
 pub mod count_bytes;
 pub mod count_chars;
 pub mod either;

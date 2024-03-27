@@ -264,4 +264,67 @@ mod tests {
         let item = Conditional::new(false, a, b);
         assert_eq!(item.to_string(), "");
     }
+
+    #[test]
+    fn optional() {
+        let item = Optional::new(true, "optional");
+        assert_eq!(item.to_string(), "optional");
+
+        let item = Optional::new(false, "optional");
+        assert_eq!(item.to_string(), "");
+    }
+
+    #[test]
+    fn concat() {
+        let item = Concat::new("", "");
+        assert_eq!(item.to_string(), "");
+
+        let item = Concat::new("a", "b");
+        assert_eq!(item.to_string(), "ab");
+    }
+
+    #[test]
+    fn concat3() {
+        let item = Concat3::new("", "", "");
+        assert_eq!(item.to_string(), "");
+
+        let item = Concat3::new("a", "bc", "d");
+        assert_eq!(item.to_string(), "abcd");
+    }
+
+    #[test]
+    fn concat4() {
+        let item = Concat4::new("", "", "", "");
+        assert_eq!(item.to_string(), "");
+
+        let item = Concat4::new("a", "b", "c", "d");
+        assert_eq!(item.to_string(), "abcd");
+    }
+
+    #[test]
+    fn concat_n() {
+        let item: [&str; 0] = [];
+        let item = ConcatN::new(item);
+        assert_eq!(item.to_string(), "");
+
+        let item: [&str; 1] = ["a"];
+        let item = ConcatN::new(item);
+        assert_eq!(item.to_string(), "a");
+
+        let item: [&str; 2] = ["a", "b"];
+        let item = ConcatN::new(item);
+        assert_eq!(item.to_string(), "ab");
+
+        let item: [&str; 3] = ["a", "b", "c"];
+        let item = ConcatN::new(item);
+        assert_eq!(item.to_string(), "abc");
+
+        let item: [&str; 4] = ["a", "b", "c", "d"];
+        let item = ConcatN::new(item);
+        assert_eq!(item.to_string(), "abcd");
+
+        let item: [&str; 5] = ["a", "b", "c", "d", "e"];
+        let item = ConcatN::new(item);
+        assert_eq!(item.to_string(), "abcde");
+    }
 }
